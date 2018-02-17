@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context="com.kieranclare.p16163779.galagalaxian.view.SplashActivity"
+    tools:showIn="@layout/activity_splash"
+    android:background="@color/black">
+
+        <ImageView
+            android:id="@+id/arkanoid_image"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/arkanoid"
+            android:layout_centerInParent="true"
+        />
+
+        <Button
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/start_button"
+            android:id="@+id/startbtn"
+            android:layout_gravity="center_horizontal|center"
+            android:layout_below="@+id/arkanoid_image"
+        />
+</RelativeLayout>
