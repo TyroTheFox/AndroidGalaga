@@ -9,7 +9,7 @@ import java.util.LinkedList;
 
 public abstract class EnemyGroup {
     LinkedList<EnemyShip> ships;
-    ArrayList<EnemyShip> activeShips;
+    LinkedList<EnemyShip> activeShips;
     public float startDelay;
     public boolean ready = false, flying = false;
     public float delay = 4, tickSize = 0.1f, time = 0;
@@ -20,11 +20,13 @@ public abstract class EnemyGroup {
 
     public EnemyGroup(){
         ships = new LinkedList<>();
+        activeShips = new LinkedList<>();
         startDelay = 4;
     }
 
     public EnemyGroup(float delay){
         ships = new LinkedList<>();
+        activeShips = new LinkedList<>();
         startDelay = delay;
     }
 

@@ -17,13 +17,9 @@ public class GridPattern extends EnemyGroup{
     public float x = 0, y = 0, width = 0, height = 0;
     private float marginX = 10, marginY = 20;
 
-    //private EnemyShip positionsYellow[][], positionsRed[][], positionsBlue[][], positionsCom[][];
+    private EnemyShip positionsYellow[][], positionsRed[][], positionsBlue[][], positionsCom[][];
     //ArrayList<EnemyShip[][]> positions = new ArrayList();
-    List<List<List<EnemyShip>>> ships = new ArrayList<>();
-    List<List<EnemyShip>> yellowShips = new ArrayList<>();
-    List<List<EnemyShip>> redShips = new ArrayList<>();
-    List<List<EnemyShip>> blueShips = new ArrayList<>();
-    List<List<EnemyShip>> conShips = new ArrayList<>();
+    List<EnemyShip[][]> ships = new ArrayList<>();
 
     private int positionYellow = 0, currentRowYellow = 0, currentColumnYellow = 0;
     private int positionRed = 0, currentRowRed = 0, currentColumnRed = 0;
@@ -55,24 +51,19 @@ public class GridPattern extends EnemyGroup{
         height = screenS.y*0.5f;
         x = xIn;
         y = yIn;
-        /*
+
         positionsYellow = new EnemyShip[columns][rows];
         positionsRed = new EnemyShip[columns][rows];
         positionsBlue = new EnemyShip[columns][rows];
         positionsCom = new EnemyShip[columns][rows];
-        positions.add(positionsYellow);
-        positions.add(positionsRed);
-        positions.add(positionsBlue);
-        positions.add(positionsCom);*/
+        ships.add(positionsYellow);
+        ships.add(positionsRed);
+        ships.add(positionsBlue);
+        ships.add(positionsCom);
         arrayLength = columns * rows;
         this.columns = columns;
         this.rows = rows;
         screenSize = screenS;
-        yellowShips.add(new ArrayList<EnemyShip>());
-        redShips.add(new ArrayList<EnemyShip>());
-        blueShips.add(new ArrayList<EnemyShip>());
-        conShips.add(new ArrayList<EnemyShip>());
-
     }
 
     @Override
@@ -117,11 +108,10 @@ public class GridPattern extends EnemyGroup{
             return false;
         }
         if(currentColumnYellow >= columns -1){
-            yellowShips.add(new ArrayList<EnemyShip>());
             currentRowYellow++;
             currentColumnYellow = 0;
         }
-        yellowShips.get(currentRowYellow).add(enemyShip);
+        ships.get(0)[currentColumnYellow][currentRowYellow] = enemyShip;
         enemyShip.gridx = currentColumnYellow;
         enemyShip.gridy = currentRowYellow;
         currentColumnYellow++;
@@ -138,11 +128,10 @@ public class GridPattern extends EnemyGroup{
             return false;
         }
         if(currentColumnRed >= columns - 1){
-            redShips.add(new ArrayList<EnemyShip>());
             currentRowRed++;
             currentColumnRed = 0;
         }
-        redShips.get(currentRowRed).add(enemyShip);
+        ships.get(1)[currentColumnRed][currentRowRed] = enemyShip;
         enemyShip.gridx = currentColumnRed;
         enemyShip.gridy = currentRowRed;
         currentColumnRed++;
@@ -159,11 +148,10 @@ public class GridPattern extends EnemyGroup{
             return false;
         }
         if(currentColumnBlue >= columns - 1){
-            blueShips.add(new ArrayList<EnemyShip>());
             currentRowBlue++;
             currentColumnBlue = 0;
         }
-        blueShips.get(currentRowRed).add(enemyShip);
+        ships.get(2)[currentColumnBlue][currentRowBlue] = enemyShip;
         enemyShip.gridx = currentColumnBlue;
         enemyShip.gridy = currentRowBlue;
         currentColumnBlue++;
@@ -180,11 +168,10 @@ public class GridPattern extends EnemyGroup{
             return false;
         }
         if(currentColumnCom >= columns - 1){
-            conShips.add(new ArrayList<EnemyShip>());
             currentRowCom++;
             currentColumnCom = 0;
         }
-        redShips.get(currentRowRed).add(enemyShip);
+        ships.get(3)[currentColumnCom][currentRowCom] = enemyShip;
         enemyShip.gridx = currentColumnCom;
         enemyShip.gridy = currentRowCom;
         currentColumnCom++;
@@ -200,11 +187,13 @@ public class GridPattern extends EnemyGroup{
     public EnemyShip getRandomShip(){
         Random random = new Random();
         ArrayList<EnemyShip> notFlying = new ArrayList();
-        for(List<List<EnemyShip>> shipType : ships){
-            for(List<EnemyShip> gridX : shipType){
+        for(EnemyShip[][] shipType : ships){
+            for(EnemyShip[] gridX : shipType){
                 for(EnemyShip gridY : gridX){
-                    if(!gridY.flying) {
-                        notFlying.add(gridY);
+                    if(gridY != null){
+                        if(!gridY.flying) {
+                            notFlying.add(gridY);
+                        }
                     }
                 }
             }
@@ -217,51 +206,52 @@ public class GridPattern extends EnemyGroup{
     }
 
     public float[] getPosition(int gridX, int gridY, int enemyType){
-        float screenCenter = (screenSize.x - (ships.get(enemyType).get(gridX).get(gridY).getWidth()))*0.5f;
+        float screenCenter = 0;
+        float shipWidth = 0, shipHeight = 0;
+        screenCenter = (screenSize.x - (ships.get(enemyType)[gridX][gridY].getWidth()))*0.5f;
+        shipWidth = ships.get(enemyType)[gridX][gridY].getWidth();
+        shipHeight = ships.get(enemyType)[gridX][gridY].getHeight();
+
         float offset = 0;
-        if( (gridX & 1) == 0 && gridX > 0) {offset += (ships.get(enemyType).get(gridX).get(gridY).getWidth() * (Math.round(gridX*0.5f))) + (marginX * gridX);}
-        else {offset -= (ships.get(enemyType).get(gridX).get(gridY).getWidth() * (Math.round(gridX*0.5f))) + (marginX * gridX);}
+        if( (gridX & 1) == 0 && gridX > 0) {offset += (shipWidth * (Math.round(gridX*0.5f))) + (marginX * gridX);}
+        else {offset -= (shipWidth * (Math.round(gridX*0.5f))) + (marginX * gridX);}
         return new float[]{screenCenter + offset,
-                y + (ships.get(enemyType).get(gridX).get(gridY).getHeight() * gridY) + (ships.get(enemyType).get(gridX).get(gridY).getHeight() * (3 - enemyType))
+                y + (shipHeight * gridY) + (shipHeight * (3 - enemyType))
                         + (marginY * gridY) + (marginY * (3 - enemyType))};
     }
 
     public ArrayList<Bullet> updateAll(ArrayList<Bullet> playerShots, PlayerShip playerShip, long delta){
-        if(ships.size() <= 0){
-            ships.add(yellowShips);
-            ships.add(redShips);
-            ships.add(blueShips);
-            ships.add(conShips);
-        }
         ArrayList<Bullet> enemyShots = new ArrayList<>();
         ArrayList<EnemyShip> toRemove = new ArrayList<>();
-        for(List<List<EnemyShip>> shipType : ships){
-            for(List<EnemyShip> gridX : shipType){
+        for(EnemyShip[][] shipType : ships){
+            for(EnemyShip[] gridX : shipType){
                 for(EnemyShip gridY : gridX){
-                    gridY.update(playerShots, playerShip, delta);
-                    enemyShots.addAll(gridY.getAllBullets());
-                    if (gridY.HP < 0) {
-                        toRemove.add(gridY);
+                    if(gridY != null) {
+                        gridY.update(playerShots, playerShip, delta);
+                        enemyShots.addAll(gridY.getAllBullets());
+                        if (gridY.HP < 0) {
+                            toRemove.add(gridY);
+                        }
                     }
                 }
             }
         }
         for(EnemyShip ship : toRemove){
             switch (ship.eType){
-                case YELLOW: ships.get(0).get(ship.gridx).remove(ship.gridy); break;
-                case RED: ships.get(1).get(ship.gridx).remove(ship.gridy); break;
-                case BLUE: ships.get(2).get(ship.gridx).remove(ship.gridy); break;
-                case COMMANDER: ships.get(3).get(ship.gridx).remove(ship.gridy); break;
+                case YELLOW: ships.get(0)[ship.gridx][ship.gridy] = null; break;
+                case RED: ships.get(1)[ship.gridx][ship.gridy] = null; break;
+                case BLUE: ships.get(2)[ship.gridx][ship.gridy] = null; break;
+                case COMMANDER: ships.get(3)[ship.gridx][ship.gridy] = null; break;
             }
         }
         return enemyShots;
     }
 
     public void drawAll(Paint p, Canvas c){
-        for(List<List<EnemyShip>> shipType : ships){
-            for(List<EnemyShip> gridX : shipType){
+        for(EnemyShip[][] shipType : ships){
+            for(EnemyShip[] gridX : shipType){
                 for(EnemyShip gridY : gridX){
-                    gridY.drawRect(p, c);
+                    if(gridY != null) gridY.drawRect(p, c);
                 }
             }
         }

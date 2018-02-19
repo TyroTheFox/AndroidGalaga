@@ -6,6 +6,7 @@ import android.graphics.Paint;
 import android.graphics.Point;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Random;
 
 /**
@@ -15,7 +16,8 @@ import java.util.Random;
 public class Level
 {
     ArrayList<EnemyShip> ships;
-    ArrayList<AttackGroup> groups;
+    LinkedList<AttackGroup> groups;
+    ArrayList<AttackGroup> activeGroups;
     ArrayList<Bullet> enemyShots;
     private boolean flying = false, ready = false, waiting = false;
     private int listPos = 0;
@@ -34,13 +36,15 @@ public class Level
     private int noEntranceGroups = 4;
 
     public Level(){
-        ships = new ArrayList<EnemyShip>();
-        groups = new ArrayList<>();
+        ships = new ArrayList<>();
+        groups = new LinkedList<>();
+        activeGroups = new ArrayList<>();
     }
 
     public Level(int x, int y, int w, int h, int m, Point screenS){
         ships = new ArrayList<>();
-        groups = new ArrayList<>();
+        groups = new LinkedList<>();
+        activeGroups = new ArrayList<>();
         gridX = x;
         gridY = y;
         blockWidth = h;
@@ -126,13 +130,13 @@ public class Level
         gridPattern.blueCount = blueNo;
         gridPattern.comCount = comNo;
 
-        for (EnemyGroup group : groups) {
+        for (AttackGroup group : groups) {
             group.generateAPAlpha(gridPattern, 0);
         }
     }
 
     public void createGroup(ArrayList<EnemyShip> enemyShips, float delay){
-        EnemyGroup temp = new AttackGroup(delay);
+        AttackGroup temp = new AttackGroup(delay);
         temp.addShips(enemyShips);
         //temp.generateAPAlpha(1000, 1000, 0);
         groups.add(temp);
@@ -228,14 +232,16 @@ public class Level
     public void updateAll(ArrayList<Bullet> playerShots, PlayerShip playerShip, long delta){
         enemyShots = new ArrayList<>();
         if(ready){
-            if(groups.size() - 1 >= listPos) {
-                groups.get(listPos).startFlight();
+            if(groups.size() > 0) {
+                AttackGroup temp = groups.pop();
+                temp.ready = true;
+                activeGroups.add(temp);
                 ready = false;
                 listPos++;
             }
         }else{
-            if(groups.size() - 1 >= listPos) {
-                delay = groups.get(listPos).startDelay;
+            if(groups.size() > 0) {
+                delay = groups.getFirst().startDelay;
             }
         }
         if(gridMode){
@@ -262,7 +268,7 @@ public class Level
         }
         ArrayList<EnemyGroup> toRemove = new ArrayList<>();
         boolean allGroupsAttacking = false;
-        for (EnemyGroup group : groups) {
+        for (AttackGroup group : activeGroups) {
             enemyShots.addAll(group.updateAll(playerShots, playerShip, delta));
             if(group.ships.size() <= 0){
                 /*for(EnemyShip ship : group.ships){
@@ -270,7 +276,7 @@ public class Level
                 }*/
                 toRemove.add(group);
             }
-            if(!group.attack){
+            if(!group.flying){
                 toRemove.add(group);
             }
         }
@@ -278,7 +284,7 @@ public class Level
             gridMode = true;
             enemyReady = true;
         }
-        groups.removeAll(toRemove);
+        activeGroups.removeAll(toRemove);
     }
 
     public ArrayList<Bullet> getEnemyShots(){
@@ -287,7 +293,7 @@ public class Level
 
     public ArrayList<EnemyShip> getActiveShips(){
         ArrayList<EnemyShip> temp = new ArrayList<>();
-        for (EnemyGroup group : groups) {
+        for (AttackGroup group : activeGroups) {
             if(group.flying) {
                 for (EnemyShip ship: group.ships) {
                     if(ship.HP > 0){
@@ -303,7 +309,7 @@ public class Level
         /*for (EnemyShip ship : ships) {
             ship.drawRect(p, c);
         }*/
-        for (EnemyGroup group : groups) {
+        for (AttackGroup group : activeGroups) {
             if(group.flying) {
                 for (EnemyShip ship: group.ships) {
                     if(ship.HP > 0){
