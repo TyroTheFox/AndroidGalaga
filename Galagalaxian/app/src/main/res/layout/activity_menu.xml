@@ -12,7 +12,7 @@
         android:id="@+id/arkanoid_image"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        app:srcCompat="@drawable/arkanoid"
+        app:srcCompat="@drawable/galagainstructions"
         android:layout_gravity="center_horizontal|center"
         android:layout_above ="@+id/start_btn"
         />
@@ -26,11 +26,20 @@
         />
 
     <Button
-        android:id="@+id/settings_btn"
+        android:id="@+id/highscore_btn"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal|center"
         android:layout_below="@+id/start_btn"
+        android:text="High Scores"
+        />
+
+    <Button
+        android:id="@+id/settings_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center"
+        android:layout_below="@+id/highscore_btn"
         android:text="@string/settings_button"
         />
 

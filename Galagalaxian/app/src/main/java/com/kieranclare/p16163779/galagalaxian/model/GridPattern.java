@@ -3,6 +3,7 @@ package com.kieranclare.p16163779.galagalaxian.model;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
+import android.graphics.PointF;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,14 +13,13 @@ import java.util.Random;
  * Created by p16163779 on 10/02/2018.
  */
 
-public class GridPattern extends EnemyGroup{
+public class GridPattern{
 
     public float x = 0, y = 0, width = 0, height = 0;
-    private float marginX = 10, marginY = 20;
 
-    private EnemyShip positionsYellow[][], positionsRed[][], positionsBlue[][], positionsCom[][];
-    //ArrayList<EnemyShip[][]> positions = new ArrayList();
-    List<EnemyShip[][]> ships = new ArrayList<>();
+    private Visitable positionsYellow[][], positionsRed[][], positionsBlue[][], positionsCom[][];
+    public List<Visitable[][]> ships = new ArrayList<>();
+    public List<Effect> effects = new ArrayList<>();
 
     private int positionYellow = 0, currentRowYellow = 0, currentColumnYellow = 0;
     private int positionRed = 0, currentRowRed = 0, currentColumnRed = 0;
@@ -27,35 +27,28 @@ public class GridPattern extends EnemyGroup{
     private int positionCom = 0, currentRowCom = 0, currentColumnCom = 0;
 
     private int columns, rows, arrayLength;
-    private int shipCount = 0;
+    public int shipCount = 0;
+    int score = 0;
+
+    CenteredGrid grid;
 
     private Point screenSize;
-
-    public int yellowCount = 0;
-    public int redCount = 0;
-    public int blueCount = 0;
-    public int comCount = 0;
-
-    enum enemyType {YELLOW, RED, BLUE, COMMANDER};
+    public ArrayList<Visitable> deadShips = new ArrayList<>();
+    ShipVisitor shipVisitor = new ShipVisitor();
 
     /**
      *
      * @param columns
      * @param rows
-     * @param xIn
-     * @param yIn
      */
-    public GridPattern(int columns, int rows, float xIn, float yIn, Point screenS){
-        super();
+    public GridPattern(int columns, int rows, Point screenS){
         width = screenS.x ;
         height = screenS.y*0.5f;
-        x = xIn;
-        y = yIn;
 
-        positionsYellow = new EnemyShip[columns][rows];
-        positionsRed = new EnemyShip[columns][rows];
-        positionsBlue = new EnemyShip[columns][rows];
-        positionsCom = new EnemyShip[columns][rows];
+        positionsYellow = new Visitable[columns][rows];
+        positionsRed = new Visitable[columns][rows];
+        positionsBlue = new Visitable[columns][rows];
+        positionsCom = new Visitable[columns][rows];
         ships.add(positionsYellow);
         ships.add(positionsRed);
         ships.add(positionsBlue);
@@ -64,134 +57,139 @@ public class GridPattern extends EnemyGroup{
         this.columns = columns;
         this.rows = rows;
         screenSize = screenS;
+
     }
 
-    @Override
-    public void addShip(EnemyShip enemyShip) {
-        if(enemyShip.eType == EnemyShip.enemyType.YELLOW){
+    public void initialiseGrid(float xPos, float shipWidth, float shipHeight){
+        int tempWidth = currentColumnYellow;
+        tempWidth = Math.max(tempWidth, currentColumnRed);
+        tempWidth = Math.max(tempWidth, currentColumnBlue);
+        tempWidth = Math.max(tempWidth, currentColumnCom);
+        int fullWidth = tempWidth + 1;
+        int fullHeight = (currentRowYellow + currentRowRed + currentRowBlue + currentRowCom) + 4;
+        grid = new CenteredGrid(xPos, 0, shipWidth, shipHeight, fullWidth, fullHeight);
+        grid.addYellowHeight(currentRowYellow);
+        grid.addRedHeight(currentRowRed);
+        grid.addBlueHeight(currentRowBlue);
+        grid.addCommanderHeight(currentRowCom);
+    }
+
+    public void addShip(Visitable enemyShip) {
+        if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.YELLOW){
             addYellowBug(enemyShip);
         }
-        if(enemyShip.eType == EnemyShip.enemyType.RED){
+        if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.RED){
             addRedBug(enemyShip);
         }
-        if(enemyShip.eType == EnemyShip.enemyType.BLUE){
+        if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.BLUE){
             addBlueBug(enemyShip);
         }
-        if(enemyShip.eType == EnemyShip.enemyType.COMMANDER){
+        if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.COMMANDER){
             addCommanderBug(enemyShip);
         }
     }
 
-    @Override
-    public void addShips(ArrayList<EnemyShip> groupShips) {
-        for(EnemyShip enemyShip : groupShips){
-            if(enemyShip.eType == EnemyShip.enemyType.YELLOW){
+    public void addShips(ArrayList<Visitable> groupShips) {
+        for(Visitable enemyShip : groupShips){
+            if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.YELLOW){
                 addYellowBug(enemyShip);
             }
-            if(enemyShip.eType == EnemyShip.enemyType.RED){
+            if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.RED){
                 addRedBug(enemyShip);
             }
-            if(enemyShip.eType == EnemyShip.enemyType.BLUE){
+            if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.BLUE){
                 addBlueBug(enemyShip);
             }
-            if(enemyShip.eType == EnemyShip.enemyType.COMMANDER){
+            if(enemyShip.getEnemyType(shipVisitor) == EnemyShip.enemyType.COMMANDER){
                 addCommanderBug(enemyShip);
             }
         }
     }
 
-    public boolean addYellowBug(EnemyShip enemyShip) {
+    private void addYellowBug(Visitable enemyShip) {
         if(positionYellow >= arrayLength){
-            return false;
+            return;
         }
         if(currentRowYellow >= rows){
-            return false;
+            return;
         }
-        if(currentColumnYellow >= columns -1){
+        if(currentColumnYellow >= columns){
             currentRowYellow++;
             currentColumnYellow = 0;
         }
         ships.get(0)[currentColumnYellow][currentRowYellow] = enemyShip;
-        enemyShip.gridx = currentColumnYellow;
-        enemyShip.gridy = currentRowYellow;
+        enemyShip.setGridPos(shipVisitor, new Point(currentColumnYellow, currentRowYellow));
         currentColumnYellow++;
         positionYellow++;
         shipCount++;
-        return true;
     }
 
-    public boolean addRedBug(EnemyShip enemyShip) {
+    private void addRedBug(Visitable enemyShip) {
         if(positionRed >= arrayLength){
-            return false;
+            return;
         }
         if(currentRowRed >= rows){
-            return false;
+            return;
         }
-        if(currentColumnRed >= columns - 1){
+        if(currentColumnRed >= columns){
             currentRowRed++;
             currentColumnRed = 0;
         }
         ships.get(1)[currentColumnRed][currentRowRed] = enemyShip;
-        enemyShip.gridx = currentColumnRed;
-        enemyShip.gridy = currentRowRed;
+        enemyShip.setGridPos(shipVisitor, new Point(currentColumnRed, currentRowRed));
         currentColumnRed++;
         positionRed++;
         shipCount++;
-        return true;
     }
 
-    public boolean addBlueBug(EnemyShip enemyShip) {
+    private void addBlueBug(Visitable enemyShip) {
         if(positionBlue >= arrayLength){
-            return false;
+            return;
         }
         if(currentRowBlue >= rows){
-            return false;
+            return;
         }
-        if(currentColumnBlue >= columns - 1){
+        if(currentColumnBlue >= columns){
             currentRowBlue++;
             currentColumnBlue = 0;
         }
         ships.get(2)[currentColumnBlue][currentRowBlue] = enemyShip;
-        enemyShip.gridx = currentColumnBlue;
-        enemyShip.gridy = currentRowBlue;
+        enemyShip.setGridPos(shipVisitor, new Point(currentColumnBlue, currentRowBlue));
         currentColumnBlue++;
         positionBlue++;
         shipCount++;
-        return true;
     }
 
-    public boolean addCommanderBug(EnemyShip enemyShip) {
+    private void addCommanderBug(Visitable enemyShip) {
         if(positionCom >= arrayLength){
-            return false;
+            return;
         }
         if(currentRowCom >= rows){
-            return false;
+            return;
         }
-        if(currentColumnCom >= columns - 1){
+        if(currentColumnCom >= columns){
             currentRowCom++;
             currentColumnCom = 0;
         }
         ships.get(3)[currentColumnCom][currentRowCom] = enemyShip;
-        enemyShip.gridx = currentColumnCom;
-        enemyShip.gridy = currentRowCom;
+        enemyShip.setGridPos(shipVisitor, new Point(currentColumnCom, currentRowCom));
         currentColumnCom++;
         positionCom++;
         shipCount++;
-        return true;
     }
 
     public boolean isEmpty(){
         return ships.size() <= 0;
     }
 
-    public EnemyShip getRandomShip(){
+    Visitable getRandomShip(){
         Random random = new Random();
-        ArrayList<EnemyShip> notFlying = new ArrayList();
-        for(EnemyShip[][] shipType : ships){
-            for(EnemyShip[] gridX : shipType){
-                for(EnemyShip gridY : gridX){
+        ArrayList<Visitable> notFlying = new ArrayList<>();
+        for(Visitable[][] shipType : ships){
+            for(Visitable[] gridX : shipType){
+                for(Visitable gridY : gridX){
                     if(gridY != null){
-                        if(!gridY.flying) {
+                        if(gridY.isGridMode(shipVisitor)) {
                             notFlying.add(gridY);
                         }
                     }
@@ -199,61 +197,99 @@ public class GridPattern extends EnemyGroup{
             }
         }
         if(notFlying.size() == 0){
-            return new EnemyShip(1, 1, 1, 1,1, 1);
+            return null;
         }
-        EnemyShip temp = notFlying.get(random.nextInt(notFlying.size()));
+        Visitable temp = notFlying.get(random.nextInt(notFlying.size()));
+        temp.startFlying(shipVisitor);
         return temp;
     }
 
-    public float[] getPosition(int gridX, int gridY, int enemyType){
-        float screenCenter = 0;
-        float shipWidth = 0, shipHeight = 0;
-        screenCenter = (screenSize.x - (ships.get(enemyType)[gridX][gridY].getWidth()))*0.5f;
-        shipWidth = ships.get(enemyType)[gridX][gridY].getWidth();
-        shipHeight = ships.get(enemyType)[gridX][gridY].getHeight();
-
-        float offset = 0;
-        if( (gridX & 1) == 0 && gridX > 0) {offset += (shipWidth * (Math.round(gridX*0.5f))) + (marginX * gridX);}
-        else {offset -= (shipWidth * (Math.round(gridX*0.5f))) + (marginX * gridX);}
-        return new float[]{screenCenter + offset,
-                y + (shipHeight * gridY) + (shipHeight * (3 - enemyType))
-                        + (marginY * gridY) + (marginY * (3 - enemyType))};
-    }
-
-    public ArrayList<Bullet> updateAll(ArrayList<Bullet> playerShots, PlayerShip playerShip, long delta){
-        ArrayList<Bullet> enemyShots = new ArrayList<>();
-        ArrayList<EnemyShip> toRemove = new ArrayList<>();
-        for(EnemyShip[][] shipType : ships){
-            for(EnemyShip[] gridX : shipType){
-                for(EnemyShip gridY : gridX){
-                    if(gridY != null) {
-                        gridY.update(playerShots, playerShip, delta);
-                        enemyShots.addAll(gridY.getAllBullets());
-                        if (gridY.HP < 0) {
-                            toRemove.add(gridY);
+    Visitable getRandomShip(EnemyShip.enemyType enemyType){
+        Random random = new Random();
+        ArrayList<Visitable> notFlying = new ArrayList<>();
+        for(Visitable[][] shipType : ships){
+            for(Visitable[] gridX : shipType){
+                for(Visitable gridY : gridX){
+                    if(gridY != null){
+                        if(gridY.isGridMode(shipVisitor) && gridY.getEnemyType(shipVisitor).equals(enemyType)) {
+                            notFlying.add(gridY);
                         }
                     }
                 }
             }
         }
-        for(EnemyShip ship : toRemove){
-            switch (ship.eType){
-                case YELLOW: ships.get(0)[ship.gridx][ship.gridy] = null; break;
-                case RED: ships.get(1)[ship.gridx][ship.gridy] = null; break;
-                case BLUE: ships.get(2)[ship.gridx][ship.gridy] = null; break;
-                case COMMANDER: ships.get(3)[ship.gridx][ship.gridy] = null; break;
+        if(notFlying.size() == 0){
+            return null;
+        }
+        Visitable temp = notFlying.get(random.nextInt(notFlying.size()));
+        temp.startFlying(shipVisitor);
+        return temp;
+    }
+
+    float[] getPosition(int gridX, int gridY, int enemyType) {
+        return grid.getPosition(gridX, gridY, enemyType);
+    }
+
+    public ArrayList<Bullet> updateAll(ArrayList<Bullet> playerShots, PlayerShip playerShip, long delta){
+        ArrayList<Bullet> enemyShots = new ArrayList<>();
+        ArrayList<Effect> toRemove = new ArrayList<>();
+        int t = 0;
+        for(Visitable[][] shipType : ships){
+            for(Visitable[] gridX : shipType){
+                for(Visitable gridY : gridX){
+                    if(gridY != null) {
+                        gridY.update(shipVisitor, playerShots, playerShip, delta);
+                        enemyShots.addAll(gridY.getBullets(shipVisitor));
+                        if (gridY.getHP(shipVisitor) <= 0) {
+                            score += gridY.getScore(shipVisitor);
+                            effects.add(gridY.getExplosion(shipVisitor));
+                            Visitable deadShip = gridY;
+                            if(!deadShips.contains(deadShip)){
+                                deadShips.add(deadShip);
+                            }
+                            gridY = null;
+                        }
+                    }
+                    if(gridY != null){
+                        if(gridY.isGridMode(shipVisitor)) {
+                            gridY.setPos(shipVisitor, new PointF(getPosition(gridY.getGridPos(shipVisitor)[0], gridY.getGridPos(shipVisitor)[1], t)[0],
+                                    getPosition(gridY.getGridPos(shipVisitor)[0], gridY.getGridPos(shipVisitor)[1], t)[1]));
+                            //gridY.update(shipVisitor, playerShots, playerShip, delta);
+                            //enemyShots.addAll(gridY.getBullets(shipVisitor));
+                        }
+                    }
+                }
+            }
+            t++;
+        }
+
+        for(Effect effect : effects){
+            effect.update();
+            if(effect.spriteExplosion.end){
+                toRemove.add(effect);
             }
         }
+        effects.removeAll(toRemove);
+        grid.update(screenSize);
         return enemyShots;
     }
 
+    public int getScore(){
+        int temp = score;
+        score = 0;
+        return temp;
+    }
+
     public void drawAll(Paint p, Canvas c){
-        for(EnemyShip[][] shipType : ships){
-            for(EnemyShip[] gridX : shipType){
-                for(EnemyShip gridY : gridX){
-                    if(gridY != null) gridY.drawRect(p, c);
+        for(Visitable[][] shipType : ships){
+            for(Visitable[] gridX : shipType){
+                for(Visitable gridY : gridX){
+                    if(gridY != null && gridY.getHP(shipVisitor) > 0) gridY.drawRect(shipVisitor, p , c);
                 }
             }
+        }
+        for(Effect effect : effects){
+            effect.draw(p, c);
         }
     }
 }

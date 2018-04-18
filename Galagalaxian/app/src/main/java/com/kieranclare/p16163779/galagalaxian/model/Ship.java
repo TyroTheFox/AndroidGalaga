@@ -9,7 +9,7 @@ import java.util.ArrayList;
  * Created by p16163779 on 06/02/2018.
  */
 
-public class Ship extends GameObject implements CarryingPowerUp{
+public class Ship extends GameObject{
     protected int colour = 0;
     private boolean isBonus = false;
     protected BulletBank bulletBank;
@@ -61,16 +61,6 @@ public class Ship extends GameObject implements CarryingPowerUp{
 
     public void fire(){
         bulletBank.fireNew(x + (getWidth()*0.5f), y, 0, -5, damageMultiplier);
-    }
-
-    @Override
-    public boolean getBonus() {
-        return isBonus;
-    }
-
-    @Override
-    public void setBonus(boolean b) {
-        isBonus = b;
     }
 
     public ArrayList<Bullet> getAllBullets(){

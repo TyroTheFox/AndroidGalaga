@@ -13,15 +13,18 @@ import java.util.LinkedList;
 
 public class EnemyShip extends Ship {
     public float speed = 1;
-    public boolean ready = true, firing = false;
-    public float fireRate = 7, tickSize = 0.1f, time = 0;
+    public boolean ready = true, firing = false, attacking = false;
+    public float fireRate = 10000, tickSize = 0.1f, time = 0;
     public float delay = 0, tick = 0.01f, flyTime = 0;
     public int MaxHP = 1, HP = MaxHP;
     public int gridx = 0, gridy = 0;
     enum enemyType {YELLOW, RED, BLUE, COMMANDER};
     enemyType eType;
+    public int shotChance = 5;
 
-    private float rotation;
+    float rotation = 0;
+
+    public boolean dead = false;
 
     private LinkedList<AttackPattern> flightPath;
     PathMeasure pathMeasure;
@@ -31,7 +34,9 @@ public class EnemyShip extends Ship {
     float[] pos;
     float[] tan;
     float pathLength;
-    public boolean pathReady = true, following = false, flying = false;
+    public boolean pathReady = true, following = false, flying = false, finished = true, gridMode = false;
+
+    public boolean hurt = false;
 
     /**
      *
@@ -62,25 +67,36 @@ public class EnemyShip extends Ship {
     @Override
     public void fire(){
         if(ready) {
-            bulletBank.fireNew(x + (getWidth()*0.5f), y + getHeight(), 0, 10, damageMultiplier);
+            bulletBank.fireNew(x + (getWidth()*0.5f), y + getHeight(), 0, 25, damageMultiplier);
             ready = false;
             firing = true;
         }
     }
 
     public void BulletCollisionCheck(ArrayList<Bullet> bullets){
+        hurt = false;
         for (Bullet bullet : bullets){
             if(circleRectCollision(bullet, this)){
-                HP--;
-                bullet.life = 0;
+                damage(bullet.damage);
+                bullet.active = false;
+                bullet.hitLanded = true;
             }
         }
     }
 
     public void ShipCollisionCheck(PlayerShip ship){
-        if(rectCollision(ship)) {
-            HP--;
+        hurt = false;
+        if(rectCollision(ship.rect)) {
+            damage(1);
         }
+    }
+
+    private void damage(int amount){
+        if(hurt){
+            return;
+        }
+        HP -= amount;
+        hurt = true;
     }
 
     public void update(ArrayList<Bullet> bullets, PlayerShip ship, long delta){
@@ -88,7 +104,8 @@ public class EnemyShip extends Ship {
             //updateVector(delta);
             //Vector2 v = new Vector2(ship.x, ship.y);
             //seek(v);
-            if(flightPath.size() > 0 && flying){
+            rect.set(x, y, x + getWidth(), y + getHeight());
+            if(flightPath.size() > 0 && !finished){
                 if(!following) {
                     flyTime += delta * tick;
                     if (flyTime >= delay) {
@@ -98,34 +115,21 @@ public class EnemyShip extends Ship {
                     }
                 }
             }else{
-                currentPath = null;
+                //currentPath = null;
                 flying = false;
+
             }
 
             if(following){
                 followPath();
             }
-            /*
-            if(flying) {
-                if (pathReady) {
-                    distance = 0;
-                    continuousFlight();
-                    if(currentPath != null) {
-                        delay = currentPath.delay;
-                    }
-                }
-                flyTime += delta * tick;
-                if (flyTime >= delay) {
-                    following = true;
-                    flyTime = 0;
-                }
-                if(following) {
-                    followPath();
-                }
-            }*/
-            //rect.set(x, y, x + getWidth(), y + getHeight());
             BulletCollisionCheck(bullets);
-            //ShipCollisionCheck(ship);
+            if(ship.HP > 0) {
+                ShipCollisionCheck(ship);
+            }
+        }
+        if(gridMode){
+            rotation = -90;
         }
             bulletBank.updateAll();
         if(HP > 0) {
@@ -142,24 +146,8 @@ public class EnemyShip extends Ship {
 
     @Override
     public void drawRect(Paint p, Canvas c){
-        //c.drawPath(currentPath, p);
-        if(HP > 0) {
-            p.setColor(colour);
-            c.save();
-            //c.rotate(rotation, x - getWidth(), y - getHeight());
-            c.drawRect(x, y, x + getWidth(), y + getHeight(), p);
-            c.restore();
-        }
         bulletBank.drawAll(p, c);
     }
-
-    /*public void updateVector(long delta){
-        if(delta == 0){
-            velocity.set(0, 0);
-            return;
-        }
-        velocity.set((float)(x/delta), (float)(y/delta));
-    }*/
 
     public void addPath(AttackPattern p){
         flightPath.add(p);
@@ -171,6 +159,12 @@ public class EnemyShip extends Ship {
 
     public void startFlying(){
         flying = true;
+        attacking = true;
+        finished = false;
+        pathReady = true;
+        following = false;
+        gridMode = false;
+        pathOrderPos = 0;
     }
 
     public void setNewPath(AttackPattern p){
@@ -212,45 +206,9 @@ public class EnemyShip extends Ship {
             pathOrderPos++;
             pathReady = true;
             following = false;
+            finished = true;
+            attacking = false;
+            currentPath = null;
         }
     }
-
-    /*public void seek(Vector2 pTarget){
-        Vector2 vecDesired;
-        // 1. vector(desired velocity) = (target position) - (vehicle position)
-        vecDesired = pTarget.sub(new Vector2(x, y));
-
-        // 2. normalize vector(desired velocity)
-        vecDesired.normalize();
-
-        // 3. scale vector(desired velocity) to maximum speed
-        vecDesired.multiply(MAX_SPEED);
-
-        // 4. vector(steering force) = vector(desired velocity) - vector(current velocity)
-        Vector2 vecSteer = vecDesired.sub(velocity);
-
-        // 5. limit the magnitude of vector(steering force) to maximum force
-        if (vecSteer.len2() > MAX_STEER_SQ) {
-            vecSteer.setMagnitude(MAX_STEER);
-        }
-
-        // 6. vector(new velocity) = vector(current velocity) + vector(steering force)
-        velocity.add(vecSteer);
-
-        x += velocity.x;
-        y += velocity.y;
-
-        if(pTarget.x == x && pTarget.y == y){
-            return;
-        }
-
-        // 7. limit the magnitude of vector(new velocity) to maximum speed
-        if (velocity.len2() > MAX_SPEED_SQ) {
-           velocity.setMagnitude(MAX_SPEED);
-        }
-
-        // 8. update vehicle rotation according to the angle of the vehicle velocity
-        vecReference.add(velocity);
-        rotation = (float)Math.atan((double)(vecReference.x/vecReference.y));
-    }*/
 }

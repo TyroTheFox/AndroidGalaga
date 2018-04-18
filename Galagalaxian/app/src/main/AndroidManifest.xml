@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.kieranclare.p16163779.galagalaxian">
 
@@ -7,16 +8,28 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme" >
-        <activity android:label="@string/app_name" android:name="com.kieranclare.p16163779.galagalaxian.view.MainActivity"> </activity>
-        <activity android:label="@string/title_activity_menu" android:name="com.kieranclare.p16163779.galagalaxian.view.MenuActivity"> </activity>
-        <activity android:label="@string/game" android:name="com.kieranclare.p16163779.galagalaxian.view.GameActivity"> </activity>
-        <activity android:label="@string/title_activity_settings" android:name="com.kieranclare.p16163779.galagalaxian.view.SettingsActivity"> </activity>
-        <activity android:label="@string/title_activity_splash" android:name="com.kieranclare.p16163779.galagalaxian.view.SplashActivity">
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".view.MainActivity"
+            android:label="@string/app_name" />
+        <activity
+            android:name=".view.MenuActivity"
+            android:label="@string/title_activity_menu" />
+        <activity
+            android:name=".view.SplashActivity"
+            android:label="@string/title_activity_splash">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".view.ScoreboardActivity" />
+        <activity android:name=".view.NewHighScoreActivity" />
+        <activity
+            android:name=".view.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
+
 </manifest>

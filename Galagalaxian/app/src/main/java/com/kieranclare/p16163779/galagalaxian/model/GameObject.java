@@ -1,6 +1,5 @@
 package com.kieranclare.p16163779.galagalaxian.model;
 
-import android.graphics.Rect;
 import android.graphics.RectF;
 
 /**
@@ -50,6 +49,7 @@ public abstract class GameObject {
     public void setPosition(float x, float y){
         this.x = x;
         this.y = y;
+        rect.set(x, y, x + width, y + height);
     }
 
     /**
@@ -86,6 +86,10 @@ public abstract class GameObject {
         return false;
     }
 
+    public boolean rectCollision(RectF other){
+        return rect.intersect(other);
+    }
+
     public boolean circleRectCollision(Bullet ball, Ship block){
         float extentsx = (block.getWidth()*0.5f);
         float extentsy = (block.getHeight()*0.5f);
@@ -112,7 +116,7 @@ public abstract class GameObject {
         return distance < 0;
     }
 
-    public boolean circleRectCollision(Bullet ball, Rect block){
+    public boolean circleRectCollision(Bullet ball, RectF block){
         float extentsx = (block.width()*0.5f);
         float extentsy = (block.height()*0.5f);
         float diffx = ball.x - block.centerX();

@@ -22,6 +22,30 @@ public class MenuActivity extends AppCompatActivity {
                 startActivity(myIntent);
             }
         });
+
+        final Button hcbutton = findViewById(R.id.highscore_btn);
+        hcbutton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent myIntent = new Intent(MenuActivity.this, ScoreboardActivity.class);
+                startActivity(myIntent);
+            }
+        });
+
+        final Button sbutton = findViewById(R.id.settings_btn);
+        sbutton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                Intent myIntent = new Intent(MenuActivity.this, SettingsActivity.class);
+                startActivity(myIntent);
+            }
+        });
+
+        final Button exbutton = findViewById(R.id.exit_btn);
+        exbutton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                finishAffinity();
+                System.exit(0);
+            }
+        });
     }
 
 }
